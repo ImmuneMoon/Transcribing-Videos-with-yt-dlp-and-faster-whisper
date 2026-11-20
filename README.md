@@ -31,6 +31,7 @@ A Sources section links to the official yt-dlp and faster-whisper documentation 
 Download the PDF above, or read on below. Work through Sections 2 to 6 to transcribe your first file, then use Sections 7 and 8 to tune speed and accuracy. Section 9 handles a whole folder, and Section 10 keeps it from slowing your PC down.
 
 This guide works alongside these:
+* [GPU Transcription with whisper.cpp and Vulkan](https://github.com/ImmuneMoon/GPU-Transcription-with-whisper.cpp-and-Vulkan) - Transcribing on an AMD or Intel graphics card, about 30 times faster than real time.
 * [Python and Node Tool Environments](https://github.com/ImmuneMoon/Python-and-Node-Tool-Environments) - Installing Python and making the virtual environments (venvs) this guide uses.
 * [Safer Package Installs with npm and pip](https://github.com/ImmuneMoon/Safer-Package-Installs-npm-and-pip) - Checking a package before you install it.
 * [CLI Cheat Sheet](https://github.com/ImmuneMoon/CLI-Cheat-Sheet) - Installing Python with winget, and everyday terminal commands.
@@ -383,9 +384,13 @@ model = WhisperModel("large-v3", device="cuda", compute_type="float16")
 - **On Windows,** install them from NVIDIA's own CUDA and cuDNN downloads, and make sure their `bin` folders are on your `PATH`. faster-whisper's README also points to a third-party archive of the libraries (Purfview's whisper-standalone-win). Check where anything comes from before you run it.
 - **On Linux,** the README shows installing them with pip (`nvidia-cublas-cu12` and `nvidia-cudnn-cu12==9.*`) and setting `LD_LIBRARY_PATH`.
 
-faster-whisper's GPU support is for NVIDIA cards through CUDA. On AMD or Intel graphics, or a Mac, use the CPU settings.
+faster-whisper's GPU support is for NVIDIA cards through CUDA. On a Mac, use the CPU settings.
 
-### 8.3 How fast to expect
+### 8.3 AMD or Intel GPU
+
+faster-whisper runs on the CPU with these cards. To use the graphics card on Windows, build **whisper.cpp** with its Vulkan backend, which works with AMD's and Intel's normal drivers. [GPU Transcription with whisper.cpp and Vulkan](https://github.com/ImmuneMoon/GPU-Transcription-with-whisper.cpp-and-Vulkan) walks through it, with a folder script that works like the one in Section 9. On an AMD Radeon RX 9070 XT it ran about 30 times faster than real time, with the `large-v3-turbo` model.
+
+### 8.4 How fast to expect
 
 - **faster-whisper's own benchmark:** 13 minutes of audio, the `small` model with `int8` on 8 threads of an Intel Core i7-12700K, took 1 minute 42 seconds. That's about 7.5 times faster than real time.
 - **A typical desktop CPU:** `distil-small.en` with `int8` runs at about **8 times real time**, so an hour of audio takes around 8 minutes.
@@ -565,9 +570,10 @@ This is general information, not legal advice. Copyright law differs between cou
 | The first run **sits there with no output** | It's downloading the model | Wait a few minutes. Check your internet connection and free disk space |
 | A warning about **symlinks** in the Hugging Face cache | Windows doesn't allow symlinks by default | Harmless. Turn on Developer Mode, or set `HF_HUB_DISABLE_SYMLINKS_WARNING=1` |
 | An error about a missing **`cublas64_12.dll`** or **cuDNN** file | The NVIDIA libraries for GPU use aren't installed or aren't on `PATH` | Install cuBLAS and cuDNN for CUDA 12 (Section 8.2), or use `device="cpu"` |
+| `device="cuda"` fails on an **AMD or Intel** graphics card | faster-whisper's GPU mode uses NVIDIA's CUDA | Use `device="cpu"`, or whisper.cpp with Vulkan (Section 8.3) |
 | The same sentence **repeats** over and over, or text appears during silence or music | Whisper can loop or invent text | Use `vad_filter=True` and `condition_on_previous_text=False` (Section 9) |
 | The transcript is **gibberish or in the wrong language** | An English-only (`.en` or distil) model on other languages, or a wrong guess | Use a multilingual model and set `language` (Section 7) |
-| It's **very slow** | A large model on a CPU | Use `distil-small.en` or another smaller model, keep `int8`, and try `beam_size=1` (Section 8.3) |
+| It's **very slow** | A large model on a CPU | Use `distil-small.en` or another smaller model, keep `int8`, and try `beam_size=1` (Section 8.4) |
 | The PC is **sluggish** while it runs | The job is using every core at normal priority | Run it at low priority (Section 10) |
 
 ---
